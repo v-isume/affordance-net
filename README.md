@@ -1,3 +1,8 @@
+## Modifications
+
+1. Altered files in caffe directory to support CUDA 10.1 & cuDNN 7.6.5
+
+
 ## [AffordanceNet: An End-to-End Deep Learning Approach for Object Affordance Detection](https://arxiv.org/pdf/1709.07326.pdf)
 By Thanh-Toan Do\*, Anh Nguyen\*, Ian Reid (\* equal contribution)
 
