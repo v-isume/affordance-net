@@ -14,7 +14,7 @@ from utils.cython_bbox import bbox_overlaps
 
 import cv2
 import os.path as osp
-import cPickle
+import pickle
 DEBUG = False
 
 class PredToProposalLayer(caffe.Layer):
@@ -73,14 +73,14 @@ class PredToProposalLayer(caffe.Layer):
         num_images = 1
         #    all_boxes[cls][image] = N x 5 array of detections in
         #    (x1, y1, x2, y2, score)
-        all_boxes = [[[] for _ in xrange(num_images)]
-                     for _ in xrange(num_classes)]
+        all_boxes = [[[] for _ in range(num_images)]
+                     for _ in range(num_classes)]
 
         # print ("=========================num_classes: " + str(num_classes))
         # print ("=========================image size: " + str(im_shape))
 
         ## for each class (ignoring background class)
-        for j in xrange(1, num_classes):
+        for j in range(1, num_classes):
 
             # if j == 23:
             #     print ("=========================scores[:,j]. j = " + str(j))
@@ -106,17 +106,17 @@ class PredToProposalLayer(caffe.Layer):
             # Limit to max_per_image detections *over all classes*
         if max_per_image > 0:
             image_scores = np.hstack([all_boxes[j][i][:, -1]
-                                      for j in xrange(1, num_classes)])
+                                      for j in range(1, num_classes)])
             if len(image_scores) > max_per_image:
                 image_thresh = np.sort(image_scores)[-max_per_image]
-                for j in xrange(1, num_classes):
+                for j in range(1, num_classes):
                     keep = np.where(all_boxes[j][i][:, -1] >= image_thresh)[0]
                     all_boxes[j][i] = all_boxes[j][i][keep, :]
                     # print ("===================image: " + str(i) + "class: " + str(j))
                     # print ("===================shape of all_boxes[j][i]: " + str(all_boxes[j][i].shape))
 
         num_boxes = 0
-        for j in xrange(1, num_classes):
+        for j in range(1, num_classes):
             num_boxes = num_boxes + all_boxes[j][i].shape[0]
 
         # print ("===========num_boxes========:" + str(num_boxes))
@@ -128,7 +128,7 @@ class PredToProposalLayer(caffe.Layer):
         rois_final = np.zeros((num_boxes, 5), dtype=np.float32)
 
         count = 0
-        for j in xrange(1, num_classes):
+        for j in range(1, num_classes):
             all_boxes_j = all_boxes[j][i] #boxes correspond to class j
             c = all_boxes_j.shape[0]
             if c > 0:
