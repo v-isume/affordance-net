@@ -25,12 +25,12 @@ root_path = os.path.abspath(os.path.join(cwd, os.pardir))  # get parent path
 print 'AffordanceNet root folder: ', root_path
 img_folder = cwd + '/img'
 
-OBJ_CLASSES = ('__background__', 'bowl', 'tvm', 'pan', 'hammer', 'knife', 'cup', 'drill', 'racket', 'spatula', 'bottle')
+OBJ_CLASSES = ('__background__', 'PET bottle', 'bottle cap', 'cardboard', 'plastic cup', 'paper straw', 'chopstick')
 
 # Mask
-background = [200, 222, 250]  
-c1 = [0,0,205]   
-c2 = [34,139,34] 
+background = [0, 0, 0]  
+c1 = [0,0,128]   
+c2 = [0,128,0]  
 c3 = [192,192,128]   
 c4 = [165,42,42]    
 c5 = [128,64,128]   
@@ -177,6 +177,14 @@ def visualize_mask(im, rois_final, rois_class_score, rois_class_ind, masks, ori_
     
     list_bboxes = []
 
+    all_masks = []
+
+    comb_mask = []
+
+    line_list = []
+
+    max_value = 0
+
     
     for i in xrange(0, num_boxes):
         
@@ -222,23 +230,44 @@ def visualize_mask(im, rois_final, rois_class_score, rois_class_ind, masks, ori_
             
             #FOR MULTI CLASS MASK
             curr_mask[y1:y2, x1:x2] = mask # assign to output mask
-            
-            # visualize each mask
-            curr_mask = curr_mask.astype('uint8')
-            color_curr_mask = label_colours.take(curr_mask, axis=0).astype('uint8')
-            cv2.imshow('Mask' + str(i), color_curr_mask)
-            #cv2.imwrite('mask'+str(i)+'.jpg', color_curr_mask)
+            all_masks.append(curr_mask) # add mask to the list
 
+    # visualize each mask
+    
+    if len(all_masks) > 1:
+    	for x in range(0, len(all_masks[0])):
+		for y in range(0, len(all_masks[0][0])):
+    			for z in range(0, len(all_masks)):
+                        	if all_masks[z][x][y] > max_value:
+    					max_value = all_masks[z][x][y]
+			line_list.append(max_value)
+			max_value = 0
+		comb_mask.append(line_list[:])
+		del line_list[:]
+        max_value = 0
+    else:
+	comb_mask = all_masks[0]
+    print len(all_masks)
+    print len(comb_mask)
+    print len(comb_mask[0])
+    curr_mask = np.array(comb_mask, dtype=np.uint8)
+    color_curr_mask = label_colours.take(curr_mask, axis=0).astype('uint8')
+    # cv2.imshow('Mask' + str(i), color_curr_mask)
+    png_name = im_name.replace('.jpg', '.png')
+    cv2.imwrite('mask_'+ png_name, curr_mask) #save file
 
     ori_file_path = img_folder + '/' + im_name 
     img_org = cv2.imread(ori_file_path)
-    for ab in list_bboxes:
-        print 'box: ', ab
-        img_out = draw_reg_text(img_org, ab)
+    txt_name = im_name.replace('.jpg', '.txt')
+    with open(txt_name, 'w') as f:
+    	for ab in list_bboxes:
+        	print 'box: ', ab
+        	img_out = draw_reg_text(img_org, ab)
+		f.write("%s\n" % ab)
     
-    cv2.imshow('Obj detection', img_out)
-    #cv2.imwrite('obj_detction.jpg', img_out)
-    cv2.waitKey(0)
+    # cv2.imshow('Obj detection', img_out)
+    # cv2.imwrite('obj_detection.jpg', img_out)
+    # cv2.waitKey(0)
     
 
 
@@ -284,7 +313,7 @@ if __name__ == '__main__':
     
     
     prototxt = root_path + '/models/pascal_voc/VGG16/faster_rcnn_end2end/test.prototxt'
-    caffemodel = root_path + '/pretrained/AffordanceNet_200K.caffemodel'   
+    caffemodel = root_path + '/pretrained/11_20/vgg16_faster_rcnn_iter_200000.caffemodel'   
     
     if not os.path.isfile(caffemodel):
         raise IOError(('{:s} not found.\n').format(caffemodel))
@@ -301,7 +330,7 @@ if __name__ == '__main__':
     print '\n\nLoaded network {:s}'.format(caffemodel)
 
 
-    list_test_img = os.walk(img_folder).next()[2]
+    list_test_img = next(os.walk(img_folder))[2]
     
     
     # run detection for each image
