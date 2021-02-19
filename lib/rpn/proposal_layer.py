@@ -9,7 +9,7 @@ import caffe
 import numpy as np
 import yaml
 from fast_rcnn.config import cfg
-from generate_anchors import generate_anchors
+from .generate_anchors import generate_anchors
 from fast_rcnn.bbox_transform import bbox_transform_inv, clip_boxes
 from fast_rcnn.nms_wrapper import nms
 
@@ -30,14 +30,14 @@ class ProposalLayer(caffe.Layer):
         self._feat_stride = layer_params['feat_stride']
         anchor_scales = layer_params.get('scales', (8, 16, 32)) #original hardcode scales as (8,16,32)
         #anchor_scales = layer_params['scales']  # modified: load scales defined from prototxt
-        print ("=================================anchor_scales in ProposalLayer:=============" + str(anchor_scales))
+        print(("=================================anchor_scales in ProposalLayer:=============" + str(anchor_scales)))
         self._anchors = generate_anchors(scales=np.array(anchor_scales))
         self._num_anchors = self._anchors.shape[0]
 
         if DEBUG:
-            print 'feat_stride: {}'.format(self._feat_stride)
-            print 'anchors:'
-            print self._anchors
+            print(('feat_stride: {}'.format(self._feat_stride)))
+            print('anchors:')
+            print((self._anchors))
 
         # rois blob: holds R regions of interest, each is a 5-tuple
         # (n, x1, y1, x2, y2) specifying an image batch index n and a
@@ -78,14 +78,14 @@ class ProposalLayer(caffe.Layer):
         im_info = bottom[2].data[0, :]
 
         if DEBUG:
-            print 'im_size: ({}, {})'.format(im_info[0], im_info[1])
-            print 'scale: {}'.format(im_info[2])
+            print(('im_size: ({}, {})'.format(im_info[0], im_info[1])))
+            print(('scale: {}'.format(im_info[2])))
 
         # 1. Generate proposals from bbox deltas and shifted anchors
         height, width = scores.shape[-2:]
 
         if DEBUG:
-            print 'score map size: {}'.format(scores.shape)
+            print(('score map size: {}'.format(scores.shape)))
 
         # Enumerate all shifts
         shift_x = np.arange(0, width) * self._feat_stride
@@ -124,8 +124,8 @@ class ProposalLayer(caffe.Layer):
 
         # Convert anchors into proposals via bbox transformations
         proposals = bbox_transform_inv(anchors, bbox_deltas)
-        if out_verbose: print '--- proposal box: ', proposals
-        if out_verbose: print '----------------'
+        if out_verbose: print(('--- proposal box: ', proposals))
+        if out_verbose: print('----------------')
 
         # 2. clip predicted boxes to image
         proposals = clip_boxes(proposals, im_info[:2])
@@ -133,10 +133,10 @@ class ProposalLayer(caffe.Layer):
         # 3. remove predicted boxes with either height or width < threshold
         # (NOTE: convert min_size to input image scale stored in im_info[2])
         #print '--- proposal len:        : ', len(proposals)
-        if out_verbose: print '--- proposal: ', proposals
+        if out_verbose: print(('--- proposal: ', proposals))
         #print '--- min_size * im_info[2]: ', min_size * im_info[2] 
         keep = _filter_boxes(proposals, min_size * im_info[2])
-        if out_verbose: print '--- keep    : ', keep
+        if out_verbose: print(('--- keep    : ', keep))
         
         #print ("--- keep in rpn/proposal_layer.py: " + str(keep))
         proposals = proposals[keep, :]
@@ -188,6 +188,6 @@ def _filter_boxes(boxes, min_size):
     
     #print '----------KEEP VALUES: ', keep
     if len(keep) == 0:
-        print '---- WARNING: filter_boxes() remove ALL proposal.'
+        print('---- WARNING: filter_boxes() remove ALL proposal.')
         
     return keep

@@ -14,7 +14,7 @@ from utils.cython_bbox import bbox_overlaps
 
 import cv2
 import os.path as osp
-import cPickle
+import pickle
 DEBUG = False
 
 class ProposalTargetLayer(caffe.Layer):
@@ -158,7 +158,7 @@ class ProposalTargetLayer(caffe.Layer):
                     # print ("seg path: " + seg_mask_path)
 
                     with open(seg_mask_path, 'rb') as f:
-                        mask_im = cPickle.load(f)
+                        mask_im = pickle.load(f)
                     mask_im = (mask_im).astype('float32')
                     # resize the mask to size of scaled input image
                     mask_im = cv2.resize(mask_im, None, None, fx=im_scale, fy=im_scale, interpolation=cv2.INTER_LINEAR)
@@ -278,14 +278,14 @@ class ProposalTargetLayer(caffe.Layer):
 
 
         if DEBUG:
-            print 'num fg: {}'.format((labels > 0).sum())
-            print 'num bg: {}'.format((labels == 0).sum())
+            print(('num fg: {}'.format((labels > 0).sum())))
+            print(('num bg: {}'.format((labels == 0).sum())))
             self._count += 1
             self._fg_num += (labels > 0).sum()
             self._bg_num += (labels == 0).sum()
-            print 'num fg avg: {}'.format(self._fg_num / self._count)
-            print 'num bg avg: {}'.format(self._bg_num / self._count)
-            print 'ratio: {:.3f}'.format(float(self._fg_num) / float(self._bg_num))
+            print(('num fg avg: {}'.format(self._fg_num / self._count)))
+            print(('num bg avg: {}'.format(self._bg_num / self._count)))
+            print(('ratio: {:.3f}'.format(float(self._fg_num) / float(self._bg_num))))
 
         # sampled rois
         top[0].reshape(*rois.shape)

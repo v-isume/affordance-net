@@ -62,7 +62,7 @@ def _get_image_blob(im):
     im_size_min = np.min(im_shape[0:2])
     im_size_max = np.max(im_shape[0:2])
     
-    print '================= im shape original: ', im_shape
+    print(('================= im shape original: ', im_shape))
 
     processed_ims = []
 
@@ -77,7 +77,7 @@ def _get_image_blob(im):
                     interpolation=cv2.INTER_LINEAR)
     im_info = np.hstack((im.shape[:2], im_scale))[np.newaxis, :]
     
-    print '================= im shape after resize: ', im.shape
+    print(('================= im shape after resize: ', im.shape))
     
     processed_ims.append(im)
 
@@ -105,14 +105,14 @@ def imdb_proposals(net, imdb):
     """Generate RPN proposals on all images in an imdb."""
 
     _t = Timer()
-    imdb_boxes = [[] for _ in xrange(imdb.num_images)]
-    for i in xrange(imdb.num_images):
+    imdb_boxes = [[] for _ in range(imdb.num_images)]
+    for i in range(imdb.num_images):
         im = cv2.imread(imdb.image_path_at(i))
         _t.tic()
         imdb_boxes[i], scores = im_proposals(net, im)
         _t.toc()
-        print 'im_proposals: {:d}/{:d} {:.3f}s' \
-              .format(i + 1, imdb.num_images, _t.average_time)
+        print(('im_proposals: {:d}/{:d} {:.3f}s' \
+              .format(i + 1, imdb.num_images, _t.average_time)))
         if 0:
             dets = np.hstack((imdb_boxes[i], scores))
             # from IPython import embed; embed()

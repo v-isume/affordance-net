@@ -14,7 +14,7 @@ from utils.cython_bbox import bbox_overlaps
 
 import cv2
 import os.path as osp
-import cPickle
+import pickle
 import time
 DEBUG = False
 
@@ -93,7 +93,7 @@ class ProposalTargetLayer(caffe.Layer):
 
         num_images = 1
         rois_per_image = cfg.TRAIN.BATCH_SIZE / num_images #cfg.TRAIN.BATCH_SIZE = 128; num_images = 1
-        fg_rois_per_image = np.round(cfg.TRAIN.FG_FRACTION * rois_per_image) #cfg.TRAIN.FG_FRACTION = 0.25 ==> fg_rois_per_image = 0.25*128 = 32
+        fg_rois_per_image = np.round(cfg.TRAIN.FG_FRACTION * rois_per_image).astype(np.int) #cfg.TRAIN.FG_FRACTION = 0.25 ==> fg_rois_per_image = 0.25*128 = 32
 
         # Sample rois with classification labels and bounding box regression
         # targets
@@ -136,12 +136,12 @@ class ProposalTargetLayer(caffe.Layer):
             num_roi = len(rois_pos) #incase output rois_pos (so only need to define mask to rois_pos)
             #num_roi = len(rois)
 
-            if out_verbose: print ("number of rois in the image: " + str(num_roi))
+            if out_verbose: print(("number of rois in the image: " + str(num_roi)))
             #print ("size of rois_pos: " + str(rois_pos.shape[0]) + " " + str(rois_pos.shape[1]))
-            if out_verbose: print 'rois pos shape: ', rois_pos.shape
-            if out_verbose: print 'rois pos: ', rois_pos
-            if out_verbose: print "gt_assignment_pos shape: ", gt_assignment_pos.shape
-            if out_verbose: print "gt_assignment_pos: ", gt_assignment_pos
+            if out_verbose: print(('rois pos shape: ', rois_pos.shape))
+            if out_verbose: print(('rois pos: ', rois_pos))
+            if out_verbose: print(("gt_assignment_pos shape: ", gt_assignment_pos.shape))
+            if out_verbose: print(("gt_assignment_pos: ", gt_assignment_pos))
 
             #mask_targets = np.zeros((num_roi, cfg.TRAIN.MASK_SIZE * cfg.TRAIN.MASK_SIZE), dtype=np.float32)
             #mask_targets = -1*np.ones((num_roi, cfg.TRAIN.MASK_SIZE, cfg.TRAIN.MASK_SIZE), dtype=np.float32)
@@ -161,7 +161,7 @@ class ProposalTargetLayer(caffe.Layer):
             im_width = im_info[0][1]
             flipped = flipped[0][0]
 
-            if out_verbose: print 'im_ind: ', im_ind, '- im height: ', im_height, '-- im_width: ', im_width
+            if out_verbose: print(('im_ind: ', im_ind, '- im height: ', im_height, '-- im_width: ', im_width))
             
             #################################
             ### MASK PART
@@ -202,7 +202,7 @@ class ProposalTargetLayer(caffe.Layer):
                     #print ("seg path: " + seg_mask_path)
  
                     with open(seg_mask_path, 'rb') as f:
-                        mask_im = cPickle.load(f)
+                        mask_im = pickle.load(f)
                     uni_ids = np.unique(mask_im)
                     org_uni_label = np.unique(mask_im)
                     
@@ -302,13 +302,14 @@ class ProposalTargetLayer(caffe.Layer):
                 is_pos_roi = True
                 if is_pos_roi:
                     # for each positive rois, create a t_mask having same size as rois size (and fill all values by -1)
-                    roi_mask = -1 * np.ones((h, w), dtype=np.float32)
+                    roi_mask = -1 * np.ones((int(h), int(w)), dtype=np.float32)
                     if flipped:
-                        # print ("==================================im_ind:" + str(p) + '_' + str(p2))
-                        # print ("==================================gt_mask_ind:" + str(gt_mask_ind))
+                        print(("==================================im_ind:" + str(p) + '_' + str(p2)))
+                        print(("==================================gt_mask_ind:" + str(gt_mask_ind)))
                         gt_mask = mask_flipped_ims[gt_mask_ind]
                     else:
-                        #print 'gt mask ind: ', gt_mask_ind
+			print(("==================================im_ind:" + str(p) + '_' + str(p2)))
+                        print(('gt mask ind: ', gt_mask_ind))
                         gt_mask = mask_ims[gt_mask_ind]
  
                     uni_ids = np.unique(gt_mask)
@@ -327,7 +328,7 @@ class ProposalTargetLayer(caffe.Layer):
                     # print ("x1o,y1o,x2o,y2o:" + str(x1o) + " " + str(y1o) + " " + str(x2o) + " " + str(y2o))#overlap
                     # print("x2o-x1o, y2o-y1o: " + str(x2o-x1o) + " " + str(y2o-y1o))
  
-                    mask_overlap = np.zeros((y2o-y1o, x2o-x1o), dtype=np.float32)
+                    mask_overlap = np.zeros((int(y2o-y1o), int(x2o-x1o)), dtype=np.float32)
  
  
                     #color_img = cv2.cvtColor((gt_mask*255), cv2.cv.CV_GRAY2RGB)
@@ -336,7 +337,7 @@ class ProposalTargetLayer(caffe.Layer):
                     cv2.rectangle(color_img, (int(x1), int(y1)), (int(x2), int(y2)), (0, 0, 255), 8) #plot roi with Red
                     cv2.rectangle(color_img, (int(x1t), int(y1t)), (int(x2t), int(y2t)), (255, 0, 0), 4)  # plot gt with Blue
                     cv2.rectangle(color_img, (int(x1o), int(y1o)), (int(x2o), int(y2o)), (0, 255, 0), 2)  # plot overlap with Green
-                    mask_overlap_draw = color_img[y1o:y2o, x1o:x2o, :]
+                    mask_overlap_draw = color_img[int(y1o):int(y2o), int(x1o):int(x2o), :]
                     
                     if verbose_showim:
                         cv2.imshow("color_img", color_img)
@@ -344,12 +345,12 @@ class ProposalTargetLayer(caffe.Layer):
                         cv2.waitKey(0)
                     
  
-                    mask_overlap[:, :] = gt_mask[y1o:y2o, x1o:x2o]        
+                    mask_overlap[:, :] = gt_mask[int(y1o):int(y2o), int(x1o):int(x2o)]       
                     
                 
                 if roi_mask.shape[0] > 3 and roi_mask.shape[1] > 3:  #only resize if shape != (0, 0)
                 
-                    roi_mask[(y1o-y1):(y2o-y1), (x1o-x1):(x2o-x1)] = mask_overlap
+                    roi_mask[int(y1o-y1):int(y2o-y1), int(x1o-x1):int(x2o-x1)] = mask_overlap
             
                     original_uni_ids = np.unique(roi_mask)
             
@@ -371,24 +372,24 @@ class ProposalTargetLayer(caffe.Layer):
 
             
         if DEBUG:
-            print 'num fg: {}'.format((labels > 0).sum())
-            print 'num bg: {}'.format((labels == 0).sum())
+            print(('num fg: {}'.format((labels > 0).sum())))
+            print(('num bg: {}'.format((labels == 0).sum())))
             self._count += 1
             self._fg_num += (labels > 0).sum()
             self._bg_num += (labels == 0).sum()
-            print 'num fg avg: {}'.format(self._fg_num / self._count)
-            print 'num bg avg: {}'.format(self._bg_num / self._count)
-            print 'ratio: {:.3f}'.format(float(self._fg_num) / float(self._bg_num))
+            print(('num fg avg: {}'.format(self._fg_num / self._count)))
+            print(('num bg avg: {}'.format(self._bg_num / self._count)))
+            print(('ratio: {:.3f}'.format(float(self._fg_num) / float(self._bg_num))))
 
 
         ## DEBUG
         
-        if out_verbose: print '--- rois shape        : ', rois.shape
-        if out_verbose: print '--- labels shape      : ', labels.shape
-        if out_verbose: print '--- bbox_targets shape: ', bbox_targets.shape
-        if out_verbose: print '--- bbox ins wei shape: ', bbox_inside_weights.shape
-        if out_verbose: print '--- mask targets shape: ', mask_targets.shape
-        if out_verbose: print '--- rois_pos shape    : ', rois_pos.shape
+        if out_verbose: print(('--- rois shape        : ', rois.shape))
+        if out_verbose: print(('--- labels shape      : ', labels.shape))
+        if out_verbose: print(('--- bbox_targets shape: ', bbox_targets.shape))
+        if out_verbose: print(('--- bbox ins wei shape: ', bbox_inside_weights.shape))
+        if out_verbose: print(('--- mask targets shape: ', mask_targets.shape))
+        if out_verbose: print(('--- rois_pos shape    : ', rois_pos.shape))
 #         if out_verbose: print '--- new mask target shape: ', new_mask_targets.shape
 #         if out_verbose: print '--- new rois pos shape   : ', new_rois_pos.shape
 #         #if out_verbose: print '- new mask target: ', new_mask_targets
@@ -500,7 +501,7 @@ def _set_unwanted_label_to_zero(mask, before_uni_label):
     uni_mask_values = np.unique(mask)
     
     unwanted_labels = list(set(uni_mask_values).symmetric_difference(set(before_uni_label)))
-    if out_verbose: print '--- unwanted labels: ', unwanted_labels
+    if out_verbose: print(('--- unwanted labels: ', unwanted_labels))
                            
     for ul in unwanted_labels:
         mask[mask == ul] = 0 ## set value of unwanted label to zeo
@@ -529,6 +530,8 @@ def _get_bbox_regression_labels(bbox_target_data, num_classes):
         cls = clss[ind]
         start = 4 * cls
         end = start + 4
+	start=int(start)
+	end=int(end)
         bbox_targets[ind, start:end] = bbox_target_data[ind, 1:] #gan gia tri tai class tuong ung la bbox_target_data, con lai la so 0
         bbox_inside_weights[ind, start:end] = cfg.TRAIN.BBOX_INSIDE_WEIGHTS
     return bbox_targets, bbox_inside_weights
@@ -572,9 +575,10 @@ def _sample_rois(all_rois, gt_boxes, fg_rois_per_image, rois_per_image, num_clas
     # Guard against the case when an image has fewer than fg_rois_per_image
     # foreground RoIs
     fg_rois_per_this_image = min(fg_rois_per_image, fg_inds.size)
+    fg_rois_per_this_image=int(fg_rois_per_this_image)
     # Sample foreground regions without replacement
     if fg_inds.size > 0:
-        fg_inds = npr.choice(fg_inds, size=fg_rois_per_this_image, replace=False)
+        fg_inds = npr.choice(fg_inds, size=int(fg_rois_per_this_image), replace=False)
 
     # Select background RoIs as those within [BG_THRESH_LO, BG_THRESH_HI)
     bg_inds = np.where((max_overlaps < cfg.TRAIN.BG_THRESH_HI) &
@@ -585,14 +589,14 @@ def _sample_rois(all_rois, gt_boxes, fg_rois_per_image, rois_per_image, num_clas
     bg_rois_per_this_image = min(bg_rois_per_this_image, bg_inds.size)
     # Sample background regions without replacement
     if bg_inds.size > 0:
-        bg_inds = npr.choice(bg_inds, size=bg_rois_per_this_image, replace=False)
+        bg_inds = npr.choice(bg_inds, size=int(bg_rois_per_this_image), replace=False)
 
     # The indices that we're selecting (both fg and bg)
     keep_inds = np.append(fg_inds, bg_inds)
     # Select sampled values from various arrays:
     labels = labels[keep_inds]
     # Clamp labels for the background RoIs to 0
-    labels[fg_rois_per_this_image:] = 0
+    labels[int(fg_rois_per_this_image):] = 0
     rois = all_rois[keep_inds]
     # positive rois
     rois_pos = np.zeros((fg_inds.size, 5), dtype=np.float32) #because return rois_pos as top ---> allocate memory for it
